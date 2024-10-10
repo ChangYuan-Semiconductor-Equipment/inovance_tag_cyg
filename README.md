@@ -3,7 +3,7 @@
 
 
 # 安装 inovance_tag_cyg
-* python版本必须 >=3.8,<3.13
+* python版本必须 >-3.7,<3.13
 ```shell
 pip instll inovance_tag_cyg
 ```
