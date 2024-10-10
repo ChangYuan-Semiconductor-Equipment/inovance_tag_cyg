@@ -12,4 +12,3 @@ if __name__ == '__main__':
     tag.execute_read("tag_name_value", TagTypeEnum.INT.value)  # 读取 int 值
     tag.execute_read("tag_name_value", TagTypeEnum.STRING.value)  # 读取 string 值
     tag.execute_read("tag_name_value", TagTypeEnum.BOOL.value)  # 读取 bool 值
-
