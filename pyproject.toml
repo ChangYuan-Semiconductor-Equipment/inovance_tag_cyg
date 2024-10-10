@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "inovance-tag-cyg"
+version = "0.1.0"
+description = "inovance tag communication"
+authors = ["LiuWei <183074632@qq.com>"]
+readme = "README.md"
+packages = [{include = "inovance_tag"},]
+repository = "https://github.com/ChangYuan-Semiconductor-Equipment/inovance_tag_cyg.git"
+homepage = "https://github.com/ChangYuan-Semiconductor-Equipment/inovance_tag_cyg.git"
+
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+pythonnet = "^3.0.4"
+
+
+[[tool.poetry.source]]
+name = "mirrors"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+priority = "primary"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
