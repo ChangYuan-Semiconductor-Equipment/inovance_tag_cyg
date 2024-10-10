@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "inovance-tag-cyg"
-version = "0.2.0"
+name = "inovance_tag_cyg"
+version = "0.2.1"
 description = "inovance tag communication"
 authors = ["LiuWei <183074632@qq.com>"]
 readme = "README.md"
@@ -10,7 +10,7 @@ homepage = "https://github.com/ChangYuan-Semiconductor-Equipment/inovance_tag_cy
 
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = ">=3.8,<3.13"
 pythonnet = "^3.0.4"
 
 
