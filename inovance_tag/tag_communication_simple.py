@@ -1,3 +1,4 @@
+"""Simple instance."""
 from inovance_tag.tag_communication import TagCommunication
 from inovance_tag.tag_type_enum import TagTypeEnum
 
