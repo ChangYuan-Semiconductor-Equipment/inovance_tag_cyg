@@ -1,4 +1,4 @@
-name: Upload Python Package
+name: Publish
 
 on:
   release:
@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   publish:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
@@ -17,7 +17,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: '3.11'
+        python-version: "3.11"
 
     - name: Install Poetry
       run: |
