@@ -74,6 +74,8 @@ class TagCommunication:
                 self.handles.update({tag_name: handle})
             save_log and self.logger.info(f"*** Start read {tag_name} value ***")
             result, state = self.tag_instance.ReadTag(handle, getattr(self.tag_instance.TagTypeClass, read_type))
+            if read_type == "TC_STRING":
+                result = result.strip()
             save_log and self.logger.info(f"*** End read {tag_name}'s value *** -> "
                                           f"value_type: {read_type}, value: {result}, read_state: {state.ToString()}")
             return result
