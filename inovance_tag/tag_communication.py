@@ -1,5 +1,5 @@
 """汇川 plc 标签通讯."""
-# pylint: disable=W1203, disable=W0106, disable=E0401, disable=C0415
+# pylint: skip-file
 import logging
 import os.path
 from typing import Union
