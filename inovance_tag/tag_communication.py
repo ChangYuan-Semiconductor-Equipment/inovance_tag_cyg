@@ -53,13 +53,13 @@ class TagCommunication:
             return True
         return False
 
-    def execute_read(self, tag_name: str, read_type: str,  save_log=True) -> Union[str, int, bool]:
+    def execute_read(self, tag_name: str, data_type: str, save_log=True) -> Union[str, int, bool]:
         """ Read the value of the specified tag name.
 
         Args:
-            tag_name (str): Tag name to be read.
-            read_type (str): Type of data read.
-            save_log (bool): Do you want to save the log? Default save.
+            tag_name: Tag name to be read.
+            data_type: Type of data read.
+            save_log: Do you want to save the log? Default save.
 
         Returns:
             Union[str, int, bool]: Return the read value.
@@ -68,28 +68,28 @@ class TagCommunication:
             PLCReadError: An exception occurred during the reading process.
         """
         try:
-            read_type = f"TC_{read_type.upper()}"
+            data_type = f"TC_{data_type.upper()}"
             if (handle := self.handles.get(tag_name)) is None:
                 handle = self.tag_instance.CreateTagHandle(tag_name)[0]
                 self.handles.update({tag_name: handle})
             save_log and self.logger.info(f"*** Start read {tag_name} value ***")
-            result, state = self.tag_instance.ReadTag(handle, getattr(self.tag_instance.TagTypeClass, read_type))
-            if read_type == "TC_STRING":
+            result, state = self.tag_instance.ReadTag(handle, getattr(self.tag_instance.TagTypeClass, data_type))
+            if data_type == "TC_STRING":
                 result = result.strip()
             save_log and self.logger.info(f"*** End read {tag_name}'s value *** -> "
-                                          f"value_type: {read_type}, value: {result}, read_state: {state.ToString()}")
+                                          f"value_type: {data_type}, value: {result}, read_state: {state.ToString()}")
             return result
         except Exception as exc:
             raise PLCReadError(f"Read failure: may be not connect plc {self.ip}") from exc
 
-    def execute_write(self, tag_name: str, write_type: str, value: Union[int, bool, str], save_log=True):
+    def execute_write(self, tag_name: str, data_type: str, value: Union[int, bool, str], save_log=True):
         """ Write data of the specified type to the designated tag location.
 
         Args:
-            tag_name (str): Tag name to be written with value.
-            write_type (str): Write value's data type.
-            value (Union[int, bool, str]): Write value.
-            save_log (bool): Do you want to save the log? Default save.
+            tag_name: Tag name to be written with value.
+            data_type: Write value's data type.
+            value: Write value.
+            save_log: Do you want to save the log? Default save.
 
         Returns:
             bool: Is the writing successful.
@@ -98,13 +98,13 @@ class TagCommunication:
             PLCWriteError: An exception occurred during the writing process.
         """
         try:
-            write_type = f"TC_{write_type.upper()}"
+            data_type = f"TC_{data_type.upper()}"
             if (handle := self.handles.get(tag_name)) is None:
                 handle = self.tag_instance.CreateTagHandle(tag_name)[0]
                 self.handles.update({tag_name: handle})
             save_log and self.logger.info(f"*** Start write {tag_name} value *** -> value_type: "
-                                          f"{write_type}, value: {value}")
-            result = self.tag_instance.WriteTag(handle, value, getattr(self.tag_instance.TagTypeClass, write_type))
+                                          f"{data_type}, value: {value}")
+            result = self.tag_instance.WriteTag(handle, value, getattr(self.tag_instance.TagTypeClass, data_type))
             save_log and self.logger.info(f"*** End write {tag_name}'s value *** -> write_state: {result.ToString()}")
             if result == self.tag_instance.TAResult.ERR_NOERROR:
                 return True
