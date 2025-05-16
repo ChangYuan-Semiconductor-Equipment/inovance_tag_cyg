@@ -53,11 +53,11 @@ class TagCommunication:
             return True
         return False
 
-    def execute_read(self, tag_name: str, data_type: str, save_log=True) -> Union[str, int, bool]:
+    def execute_read(self, data_type: str, address: str, save_log=True) -> Union[str, int, bool]:
         """ Read the value of the specified tag name.
 
         Args:
-            tag_name: Tag name to be read.
+            address: Tag name to be read.
             data_type: Type of data read.
             save_log: Do you want to save the log? Default save.
 
@@ -69,24 +69,24 @@ class TagCommunication:
         """
         try:
             data_type = f"TC_{data_type.upper()}"
-            if (handle := self.handles.get(tag_name)) is None:
-                handle = self.tag_instance.CreateTagHandle(tag_name)[0]
-                self.handles.update({tag_name: handle})
-            save_log and self.logger.info(f"*** Start read {tag_name} value ***")
+            if (handle := self.handles.get(address)) is None:
+                handle = self.tag_instance.CreateTagHandle(address)[0]
+                self.handles.update({address: handle})
+            save_log and self.logger.info(f"*** Start read {address} value ***")
             result, state = self.tag_instance.ReadTag(handle, getattr(self.tag_instance.TagTypeClass, data_type))
             if data_type == "TC_STRING":
                 result = result.strip()
-            save_log and self.logger.info(f"*** End read {tag_name}'s value *** -> "
+            save_log and self.logger.info(f"*** End read {address}'s value *** -> "
                                           f"value_type: {data_type}, value: {result}, read_state: {state.ToString()}")
             return result
         except Exception as exc:
             raise PLCReadError(f"Read failure: may be not connect plc {self.ip}") from exc
 
-    def execute_write(self, tag_name: str, data_type: str, value: Union[int, bool, str], save_log=True):
+    def execute_write(self, data_type: str, address: str, value: Union[int, bool, str], save_log=True):
         """ Write data of the specified type to the designated tag location.
 
         Args:
-            tag_name: Tag name to be written with value.
+            address: Tag name to be written with value.
             data_type: Write value's data type.
             value: Write value.
             save_log: Do you want to save the log? Default save.
@@ -99,13 +99,13 @@ class TagCommunication:
         """
         try:
             data_type = f"TC_{data_type.upper()}"
-            if (handle := self.handles.get(tag_name)) is None:
-                handle = self.tag_instance.CreateTagHandle(tag_name)[0]
-                self.handles.update({tag_name: handle})
-            save_log and self.logger.info(f"*** Start write {tag_name} value *** -> value_type: "
+            if (handle := self.handles.get(address)) is None:
+                handle = self.tag_instance.CreateTagHandle(address)[0]
+                self.handles.update({address: handle})
+            save_log and self.logger.info(f"*** Start write {address} value *** -> value_type: "
                                           f"{data_type}, value: {value}")
             result = self.tag_instance.WriteTag(handle, value, getattr(self.tag_instance.TagTypeClass, data_type))
-            save_log and self.logger.info(f"*** End write {tag_name}'s value *** -> write_state: {result.ToString()}")
+            save_log and self.logger.info(f"*** End write {address}'s value *** -> write_state: {result.ToString()}")
             if result == self.tag_instance.TAResult.ERR_NOERROR:
                 return True
             return False
