@@ -75,7 +75,10 @@ class TagCommunication:
             save_log and self.logger.info(f"*** Start read {address} value ***")
             result, state = self.tag_instance.ReadTag(handle, getattr(self.tag_instance.TagTypeClass, data_type))
             if data_type == "TC_STRING":
-                result = result.strip()
+                if result:
+                    result = result.strip()
+                else:
+                    result = ""
             save_log and self.logger.info(f"*** End read {address}'s value *** -> "
                                           f"value_type: {data_type}, value: {result}, read_state: {state.ToString()}")
             return result
