@@ -13,14 +13,65 @@ from inovance_tag.exception import PLCReadError, PLCWriteError
 class TagCommunication:
     """汇川plc标签通信class."""
     dll_path = f"{os.path.dirname(__file__)}/inovance_tag_dll/TagAccessCS.dll"
+    LOG_FORMAT = "%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
 
-    def __init__(self, plc_ip):
+    def __init__(self, plc_ip: str, plc_name: str = ""):
+        """标签通讯构造方法.
+
+        Args:
+            plc_ip: plc ip address.
+            plc_name: plc name.
+        """
         clr.AddReference(self.dll_path)
         from TagAccessCS import TagAccessClass
+        self.plc_name = plc_name if plc_name else plc_ip
         self._tag_instance = TagAccessClass()
         self._plc_ip = plc_ip
-        self._logger = logging.getLogger(f"{self.__module__}.{self.__class__.__name__}")
+        self.logger = logging.getLogger(__name__)
         self._handles = {}  # save handle
+        self._file_handler = None  # 保存日志的处理器
+        self._initial_log_config()
+
+    def _initial_log_config(self) -> None:
+        """日志配置."""
+        self._create_log_dir()
+        self.logger.addHandler(self.file_handler)  # handler_passive 日志保存到统一文件
+
+    @property
+    def file_handler(self) -> TimedRotatingFileHandler:
+        """设置保存日志的处理器, 每隔 24h 自动生成一个日志文件.
+
+        Returns:
+            TimedRotatingFileHandler: 返回 TimedRotatingFileHandler 日志处理器.
+        """
+        if self._file_handler is None:
+            self._file_handler = TimedRotatingFileHandler(
+                f"{os.getcwd()}/log/plc_{self.plc_name}.log",
+                when="D", interval=1, backupCount=10, encoding="UTF-8"
+            )
+            self._file_handler.namer = self._custom_log_name
+            self._file_handler.setFormatter(logging.Formatter(self.LOG_FORMAT))
+        return self._file_handler
+
+    def _custom_log_name(self, log_path: str):
+        """自定义新生成的日志名称.
+
+        Args:
+            log_path: 原始的日志文件路径.
+
+        Returns:
+            str: 新生成的自定义日志文件路径.
+        """
+        _, suffix, date_str = log_path.split(".")
+        new_log_path = f"{os.getcwd()}/log/plc_{self.plc_name}_{date_str}.{suffix}"
+        return new_log_path
+
+    @staticmethod
+    def _create_log_dir():
+        """判断log目录是否存在, 不存在就创建."""
+        log_dir = pathlib.Path(f"{os.getcwd()}/log")
+        if not log_dir.exists():
+            os.mkdir(log_dir)
 
     @property
     def handles(self):
@@ -31,11 +82,6 @@ class TagCommunication:
     def ip(self):
         """plc ip."""
         return self._plc_ip
-
-    @property
-    def logger(self):
-        """日志实例."""
-        return self._logger
 
     @property
     def tag_instance(self):
@@ -72,15 +118,13 @@ class TagCommunication:
             if (handle := self.handles.get(address)) is None:
                 handle = self.tag_instance.CreateTagHandle(address)[0]
                 self.handles.update({address: handle})
-            save_log and self.logger.info(f"*** Start read {address} value ***")
             result, state = self.tag_instance.ReadTag(handle, getattr(self.tag_instance.TagTypeClass, data_type))
             if data_type == "TC_STRING":
                 if result:
                     result = result.strip()
                 else:
                     result = ""
-            save_log and self.logger.info(f"*** End read {address}'s value *** -> "
-                                          f"value_type: {data_type}, value: {result}, read_state: {state.ToString()}")
+            save_log and self.logger.info("读取 %s 地址的值是: %s", address, result)
             return result
         except Exception as exc:
             raise PLCReadError(f"Read failure: may be not connect plc {self.ip}") from exc
@@ -105,25 +149,10 @@ class TagCommunication:
             if (handle := self.handles.get(address)) is None:
                 handle = self.tag_instance.CreateTagHandle(address)[0]
                 self.handles.update({address: handle})
-            save_log and self.logger.info(f"*** Start write {address} value *** -> value_type: "
-                                          f"{data_type}, value: {value}")
             result = self.tag_instance.WriteTag(handle, value, getattr(self.tag_instance.TagTypeClass, data_type))
-            save_log and self.logger.info(f"*** End write {address}'s value *** -> write_state: {result.ToString()}")
+            save_log and self.logger.info("向地址 %s 写入 %s 结束, 写入结果: %s", address, value, result.ToString())
             if result == self.tag_instance.TAResult.ERR_NOERROR:
                 return True
             return False
         except Exception as exc:
             raise PLCWriteError(f"*** Write failure: may be not connect plc {self.ip}") from exc
-
-    @staticmethod
-    def get_true_bit_with_num(number: int) -> list:
-        """ Obtain the specific bits that are True based on an integer.
-
-        Args:
-            number (int): Number to be parsed.
-
-        Returns:
-            list: Index list with corresponding bit being True.
-        """
-        binary_str = bin(number)[2:]
-        return [i for i, bit in enumerate(reversed(binary_str)) if bit == "1"]
