@@ -2,14 +2,15 @@
 # pylint: skip-file
 import logging
 import os.path
+import pathlib
 from typing import Union
+from logging.handlers import TimedRotatingFileHandler
 
 import clr
 
 from inovance_tag.exception import PLCReadError, PLCWriteError
 
 
-# noinspection PyUnresolvedReferences
 class TagCommunication:
     """汇川plc标签通信class."""
     dll_path = f"{os.path.dirname(__file__)}/inovance_tag_dll/TagAccessCS.dll"
@@ -24,8 +25,11 @@ class TagCommunication:
         """
         logging.basicConfig(level=logging.INFO, encoding="UTF-8", format=self.LOG_FORMAT)
 
+        # noinspection PyUnresolvedReferences
         clr.AddReference(self.dll_path)
+        # noinspection PyUnresolvedReferences
         from TagAccessCS import TagAccessClass
+
         self.plc_name = plc_name if plc_name else plc_ip
         self._tag_instance = TagAccessClass()
         self._plc_ip = plc_ip
