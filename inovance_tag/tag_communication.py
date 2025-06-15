@@ -22,6 +22,8 @@ class TagCommunication:
             plc_ip: plc ip address.
             plc_name: plc name.
         """
+        logging.basicConfig(level=logging.INFO, encoding="UTF-8", format=self.LOG_FORMAT)
+
         clr.AddReference(self.dll_path)
         from TagAccessCS import TagAccessClass
         self.plc_name = plc_name if plc_name else plc_ip
