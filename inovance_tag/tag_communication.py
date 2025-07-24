@@ -16,7 +16,7 @@ class TagCommunication:
     dll_path = f"{os.path.dirname(__file__)}/inovance_tag_dll/TagAccessCS.dll"
     LOG_FORMAT = "%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
 
-    def __init__(self, plc_ip: str, plc_name: str = ""):
+    def __init__(self, plc_ip: str, plc_name: str = "", save_log: bool = False):
         """标签通讯构造方法.
 
         Args:
@@ -30,6 +30,7 @@ class TagCommunication:
         # noinspection PyUnresolvedReferences
         from TagAccessCS import TagAccessClass
 
+        self.save_log = save_log
         self.plc_name = plc_name if plc_name else plc_ip
         self._tag_instance = TagAccessClass()
         self._plc_ip = plc_ip
@@ -40,8 +41,9 @@ class TagCommunication:
 
     def _initial_log_config(self) -> None:
         """日志配置."""
-        self._create_log_dir()
-        self.logger.addHandler(self.file_handler)  # handler_passive 日志保存到统一文件
+        if self.save_log:
+            self._create_log_dir()
+            self.logger.addHandler(self.file_handler)  # handler_passive 日志保存到统一文件
 
     @property
     def file_handler(self) -> TimedRotatingFileHandler:
