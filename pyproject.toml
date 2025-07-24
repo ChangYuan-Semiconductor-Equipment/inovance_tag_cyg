@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "inovance_tag_cyg"
-version = "1.5.0"
+version = "1.6.0"
 description = "inovance tag communication"
 authors = ["LiuWei <183074632@qq.com>"]
 readme = "README.md"

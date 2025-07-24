@@ -68,7 +68,7 @@ class TagCommunication:
         Returns:
             str: 新生成的自定义日志文件路径.
         """
-        _, suffix, date_str = log_path.split(".")
+        _, suffix, date_str, *__ = log_path.split(".")
         new_log_path = f"{os.getcwd()}/log/plc_{self.plc_name}_{date_str}.{suffix}"
         return new_log_path
 
@@ -120,6 +120,8 @@ class TagCommunication:
             PLCReadError: An exception occurred during the reading process.
         """
         try:
+            if "str" in data_type:
+                data_type = "string"
             data_type = f"TC_{data_type.upper()}"
             if (handle := self.handles.get(address)) is None:
                 handle = self.tag_instance.CreateTagHandle(address)[0]
@@ -151,6 +153,8 @@ class TagCommunication:
             PLCWriteError: An exception occurred during the writing process.
         """
         try:
+            if "str" in data_type:
+                data_type = "string"
             data_type = f"TC_{data_type.upper()}"
             if (handle := self.handles.get(address)) is None:
                 handle = self.tag_instance.CreateTagHandle(address)[0]
