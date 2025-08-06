@@ -104,7 +104,10 @@ class TagCommunication:
         """
         connect_state = self.tag_instance.Connect2PlcDevice(self._plc_ip)
         if connect_state == self.tag_instance.TAResult.ERR_NOERROR:
+            self._handles = {}
+            self.logger.info("连接 %s plc 成功", self._plc_ip)
             return True
+        self.logger.info("连接 %s plc 失败", self._plc_ip)
         return False
 
     def execute_read(self, data_type: str, address: str, save_log=True) -> Union[str, int, bool]:
@@ -121,23 +124,23 @@ class TagCommunication:
         Raises:
             PLCReadError: An exception occurred during the reading process.
         """
-        try:
-            if "str" in data_type:
-                data_type = "string"
-            data_type = f"TC_{data_type.upper()}"
-            if (handle := self.handles.get(address)) is None:
-                handle = self.tag_instance.CreateTagHandle(address)[0]
-                self.handles.update({address: handle})
-            result, state = self.tag_instance.ReadTag(handle, getattr(self.tag_instance.TagTypeClass, data_type))
+        if "str" in data_type:
+            data_type = "string"
+        data_type = f"TC_{data_type.upper()}"
+        if (handle := self.handles.get(address)) is None:
+            self.create_handles(address)
+
+        result, state = self.tag_instance.ReadTag(handle, getattr(self.tag_instance.TagTypeClass, data_type))
+
+        save_log and self.logger.info("读取 %s 地址的值是: %s", address, result)
+        if state == self.tag_instance.TAResult.ERR_NOERROR:
             if data_type == "TC_STRING":
                 if result:
                     result = result.strip()
                 else:
                     result = ""
-            save_log and self.logger.info("读取 %s 地址的值是: %s", address, result)
             return result
-        except Exception as exc:
-            raise PLCReadError(f"Read failure: may be not connect plc {self.ip}") from exc
+        raise PLCReadError("读取 %s 数据失败", address)
 
     def execute_write(self, data_type: str, address: str, value: Union[int, bool, str], save_log=True):
         """ Write data of the specified type to the designated tag location.
@@ -148,23 +151,33 @@ class TagCommunication:
             value: Write value.
             save_log: Do you want to save the log? Default save.
 
-        Returns:
-            bool: Is the writing successful.
-
         Raises:
             PLCWriteError: An exception occurred during the writing process.
         """
-        try:
-            if "str" in data_type:
-                data_type = "string"
-            data_type = f"TC_{data_type.upper()}"
-            if (handle := self.handles.get(address)) is None:
-                handle = self.tag_instance.CreateTagHandle(address)[0]
-                self.handles.update({address: handle})
-            result = self.tag_instance.WriteTag(handle, value, getattr(self.tag_instance.TagTypeClass, data_type))
-            save_log and self.logger.info("向地址 %s 写入 %s 结束, 写入结果: %s", address, value, result.ToString())
-            if result == self.tag_instance.TAResult.ERR_NOERROR:
-                return True
-            return False
-        except Exception as exc:
-            raise PLCWriteError(f"*** Write failure: may be not connect plc {self.ip}") from exc
+        if "str" in data_type:
+            data_type = "string"
+        data_type = f"TC_{data_type.upper()}"
+        if (handle := self.handles.get(address)) is None:
+            self.create_handles(address)
+
+        result = self.tag_instance.WriteTag(handle, value, getattr(self.tag_instance.TagTypeClass, data_type))
+
+        if result != self.tag_instance.TAResult.ERR_NOERROR:
+            raise PLCWriteError("向 %s 写入 %s 失败", address, value)
+
+        if save_log:
+            self.logger.info("向地址 %s 写入 %s 成功", address, value)
+
+    def create_handles(self, address: str):
+        """创建标签对应的 handle.
+
+        Args:
+            address: 标签地址.
+        """
+        handle, state = self.tag_instance.CreateTagHandle(address)
+        if state == self.tag_instance.TAResult.ERR_NOERROR:
+            self.logger.info("创建标签 %s 对应的 handle 成功", address)
+            self.handles.update({address: handle})
+        else:
+            self.logger.info("创建标签 %s 对应的 handle 失败", address)
+            self.communication_open()
