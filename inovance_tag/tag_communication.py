@@ -39,7 +39,7 @@ class TagCommunication:
         self._file_handler = None  # 保存日志的处理器
         self._initial_log_config()
 
-    def _initial_log_config(self) -> None:
+    def _initial_log_config(self):
         """日志配置."""
         if self.save_log:
             self._create_log_dir()
@@ -129,6 +129,7 @@ class TagCommunication:
         data_type = f"TC_{data_type.upper()}"
         if (handle := self.handles.get(address)) is None:
             self.create_handles(address)
+            handle = self.handles.get(address)
 
         result, state = self.tag_instance.ReadTag(handle, getattr(self.tag_instance.TagTypeClass, data_type))
 
@@ -159,6 +160,7 @@ class TagCommunication:
         data_type = f"TC_{data_type.upper()}"
         if (handle := self.handles.get(address)) is None:
             self.create_handles(address)
+            handle = self.handles.get(address)
 
         result = self.tag_instance.WriteTag(handle, value, getattr(self.tag_instance.TagTypeClass, data_type))
 
