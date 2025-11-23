@@ -143,6 +143,41 @@ class TagCommunication:
             return result
         raise PLCReadError("读取 %s 数据失败", address)
 
+    def execute_read_array(self, data_type: str, address: str, save_log=True) -> list[Union[str, int, bool, float]]:
+        """读取数组类型的数据.
+
+        Args:
+            address: Tag name to be read.
+            data_type: 数据元素类型.
+            save_log: Do you want to save the log? Default save.
+
+        Returns:
+            list[Union[str, int, bool, float]: 返回读取到的数组数据.
+
+        Raises:
+            PLCReadError: An exception occurred during the reading process.
+        """
+        try:
+            data_type = f"TC_{data_type.upper()}"
+            if (handle := self.handles.get(address)) is None:
+                handle = self.tag_instance.CreateTagHandle(address)[0]
+                self.handles.update({address: handle})
+            results, state = self.tag_instance.ReadArray(handle, getattr(self.tag_instance.TagTypeClass, data_type))
+            save_log and self.logger.info("读取 %s 地址的值是: %s", address, results)
+            if state == self.tag_instance.TAResult.ERR_NOERROR:
+                values = []
+                for result in results:
+                    if data_type == "TC_STRING":
+                        if result:
+                            result = result.strip()
+                        else:
+                            result = ""
+                    values.append(result)
+                return values
+            raise PLCReadError("读取 %s 数据失败", address)
+        except Exception as exc:
+            raise PLCReadError(f"Read failure: may be not connect plc {self.ip}") from exc
+
     def execute_write(self, data_type: str, address: str, value: Union[int, bool, str], save_log=True):
         """ Write data of the specified type to the designated tag location.
 
@@ -163,6 +198,35 @@ class TagCommunication:
             handle = self.handles.get(address)
 
         result = self.tag_instance.WriteTag(handle, value, getattr(self.tag_instance.TagTypeClass, data_type))
+
+        if result != self.tag_instance.TAResult.ERR_NOERROR:
+            raise PLCWriteError("向 %s 写入 %s 失败", address, value)
+
+        if save_log:
+            self.logger.info("向地址 %s 写入 %s 成功", address, value)
+
+    def execute_write_array(self, data_type: str, address: str, value: list[Union[int, bool, str]], save_log=True):
+        """写入数组数据.
+
+        Args:
+            address: 数组标签地址.
+            data_type: 数组成员类型.
+            value: Write value.
+            save_log: Do you want to save the log? Default save.
+
+        Raises:
+            PLCWriteError: An exception occurred during the writing process.
+        """
+        if "str" in data_type:
+            data_type = "string"
+        data_type = f"TC_{data_type.upper()}"
+        if (handle := self.handles.get(address)) is None:
+            self.create_handles(address)
+            handle = self.handles.get(address)
+
+        result = self.tag_instance.WriteTagArray(
+            handle, value, len(value), getattr(self.tag_instance.TagTypeClass, data_type)
+        )
 
         if result != self.tag_instance.TAResult.ERR_NOERROR:
             raise PLCWriteError("向 %s 写入 %s 失败", address, value)
